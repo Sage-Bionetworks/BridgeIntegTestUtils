@@ -244,7 +244,9 @@ public class TestUserHelper {
             if (setPassword) {
                 signUp.setPassword(PASSWORD);
             }
-            signUp.setStudy(IntegTestUtils.STUDY_ID);
+            if (signUp.getStudy() == null) {
+                signUp.setStudy(IntegTestUtils.STUDY_ID);
+            }
             signUp.setRoles(new ArrayList<>(rolesList));
             signUp.setConsent(consentUser);
             if (externalId != null) {
