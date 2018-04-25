@@ -77,6 +77,9 @@ public class TestUserHelper {
         public String getStudyId() {
             return signIn.getStudy();
         }
+        public String getUserId() {
+            return userId;
+        }
         public <T> T getClient(Class<T> service) {
             return manager.getClient(service);
         }
