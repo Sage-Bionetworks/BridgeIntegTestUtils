@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,8 @@ public class TestUserHelper {
     public static ClientInfo getClientInfo() {
         return CLIENT_INFO;
     }
+
+    private static TestUser cachedAdmin;
 
     public static class TestUser {
         private SignIn signIn;
@@ -107,9 +110,8 @@ public class TestUserHelper {
             }
             if (userId != null) {
                 // This should sign the admin manager in automatically.
-                ClientManager adminManager = new ClientManager.Builder().withSignIn(CONFIG.getAdminSignIn())
-                        .withConfig(CONFIG).withClientInfo(manager.getClientInfo()).withAcceptLanguage(LANGUAGES).build();
-                ForAdminsApi adminsApi = adminManager.getClient(ForAdminsApi.class);
+                TestUser admin = getSignedInAdmin();
+                ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
                 adminsApi.deleteUser(userId).execute();
             }
         }
@@ -123,16 +125,18 @@ public class TestUserHelper {
             return manager.getConfig();
         }
         public void setClientInfo(ClientInfo clientInfo) {
-            ClientManager man = new ClientManager.Builder()
+            this.manager = new ClientManager.Builder()
                     .withClientInfo(clientInfo)
                     .withSignIn(signIn)
                     .withConfig(manager.getConfig())
                     .withAcceptLanguage(LANGUAGES).build();
-            this.manager = man;
         }
     }
     public static TestUser getSignedInAdmin() {
-        return getSignedInUser(CONFIG.getAdminSignIn());
+        if (cachedAdmin == null) {
+            cachedAdmin = getSignedInUser(CONFIG.getAdminSignIn());
+        }
+        return cachedAdmin;
     }
 
     // Returns a pre-configured Developer account in the API study.
@@ -198,9 +202,7 @@ public class TestUserHelper {
             return this;
         }
         public Builder withRoles(Role...roles) {
-            for (Role role : roles) {
-                this.roles.add(role);
-            }
+            Collections.addAll(this.roles, roles);
             return this;
         }
         public Builder withSetPassword(boolean setPassword) {
