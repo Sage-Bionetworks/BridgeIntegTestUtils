@@ -132,9 +132,22 @@ public class TestUserHelper {
                     .withAcceptLanguage(LANGUAGES).build();
         }
     }
+    /**
+     * Get the signed in, bootstrap admin user. This method will reset the administrator's study 
+     * to be the API/test study, because this is a precondition expected by most of our tests and 
+     * it's easy to break by failing to reset the admin users's study as part of test cleanup. 
+     */
     public static TestUser getSignedInAdmin() {
         if (cachedAdmin == null) {
             cachedAdmin = getSignedInUser(CONFIG.getAdminSignIn());
+        }
+        String testStudyId = CONFIG.fromProperty(Config.Props.API_DEVELOPER_STUDY);
+        if (cachedAdmin.getStudyId() != testStudyId) {
+            try {
+                cachedAdmin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study(testStudyId)).execute();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         return cachedAdmin;
     }
