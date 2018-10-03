@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.IOException;
 
 import org.apache.commons.lang3.RandomStringUtils;
-
 import org.sagebionetworks.bridge.rest.Config;
 import org.sagebionetworks.bridge.rest.api.ForAdminsApi;
 import org.sagebionetworks.bridge.rest.api.ParticipantsApi;
