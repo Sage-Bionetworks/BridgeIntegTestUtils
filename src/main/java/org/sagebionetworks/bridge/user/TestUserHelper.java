@@ -141,7 +141,7 @@ public class TestUserHelper {
         if (cachedAdmin == null) {
             cachedAdmin = getSignedInUser(CONFIG.getAdminSignIn());
         }
-        String testStudyId = CONFIG.fromProperty(Config.Props.API_DEVELOPER_STUDY);
+        String testStudyId = CONFIG.fromProperty(Config.Props.STUDY_IDENTIFIER);
         if (cachedAdmin.getStudyId() != testStudyId) {
             try {
                 cachedAdmin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study(testStudyId)).execute();
