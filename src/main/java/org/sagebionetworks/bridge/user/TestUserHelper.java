@@ -201,6 +201,7 @@ public class TestUserHelper {
         private ClientInfo clientInfo;
         private String externalId;
         private Set<Role> roles = new HashSet<>();
+        private Set<String> substudyIds;
 
         public Builder withConsentUser(boolean consentUser) {
             this.consentUser = consentUser;
@@ -216,6 +217,10 @@ public class TestUserHelper {
         }
         public Builder withRoles(Role...roles) {
             Collections.addAll(this.roles, roles);
+            return this;
+        }
+        public Builder withSubstudyIds(Set<String> substudyIds) {
+            this.substudyIds = substudyIds;
             return this;
         }
         public Builder withSetPassword(boolean setPassword) {
@@ -264,6 +269,9 @@ public class TestUserHelper {
             }
             if (signUp.getStudy() == null) {
                 signUp.setStudy(IntegTestUtils.STUDY_ID);
+            }
+            if (substudyIds != null) {
+                signUp.setSubstudyIds(new ArrayList<>(substudyIds));
             }
             signUp.setRoles(new ArrayList<>(rolesList));
             signUp.setConsent(consentUser);
