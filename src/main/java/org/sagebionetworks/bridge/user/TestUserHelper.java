@@ -152,24 +152,6 @@ public class TestUserHelper {
         return cachedAdmin;
     }
 
-    // Returns a pre-configured Developer account in the API study.
-    public static TestUser getSignedInApiDeveloper() {
-        String email = CONFIG.fromProperty(Config.Props.API_DEVELOPER_EMAIL);
-        String password = CONFIG.fromProperty(Config.Props.API_DEVELOPER_PASSWORD);
-        String studyId = CONFIG.fromProperty(Config.Props.API_DEVELOPER_STUDY);
-        SignIn signIn = new SignIn().email(email).password(password).study(studyId);
-        return getSignedInUser(signIn);
-    }
-
-    // Returns a pre-configured Developer account in the Shared study.
-    public static TestUser getSignedInSharedDeveloper() {
-        String email = CONFIG.fromProperty(Config.Props.SHARED_DEVELOPER_EMAIL);
-        String password = CONFIG.fromProperty(Config.Props.SHARED_DEVELOPER_PASSWORD);
-        String studyId = CONFIG.fromProperty(Config.Props.SHARED_DEVELOPER_STUDY);
-        SignIn signIn = new SignIn().email(email).password(password).study(studyId);
-        return getSignedInUser(signIn);
-    }
-
     // Returns the test user for the given sign-in credentials.
     public static TestUser getSignedInUser(SignIn signIn) {
         ClientManager manager = new ClientManager.Builder().withSignIn(signIn).withConfig(CONFIG)
