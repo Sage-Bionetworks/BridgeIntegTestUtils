@@ -1,6 +1,7 @@
 package org.sagebionetworks.bridge.user;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sagebionetworks.bridge.util.IntegTestUtils.STUDY_ID;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -170,9 +171,10 @@ public class TestUserHelper {
     
     public static TestUser createAndSignInUser(Class<?> cls, String studyId, Role... roles) throws IOException {
         TestUser admin = getSignedInAdmin();
-        admin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study(studyId)).execute();
+        ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
+        adminsApi.adminChangeStudy(new SignIn().study(studyId)).execute();
         TestUser createdUser = new TestUserHelper.Builder(cls).withStudyId(studyId).withRoles(roles).createAndSignInUser();
-        admin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study("api")).execute();
+        adminsApi.adminChangeStudy(new SignIn().study(STUDY_ID)).execute();
         return createdUser;
     }
     public static TestUser createAndSignInUser(Class<?> cls, boolean consentUser, Role... roles) throws IOException {
