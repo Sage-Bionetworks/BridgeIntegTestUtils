@@ -17,6 +17,7 @@ public class IntegTestUtils {
     public static final Config CONFIG = new Config();
     public static final Phone PHONE = new Phone().number("+19712486796").regionCode("US");
     public static final String STUDY_ID = "api";
+    public static final String SHARED_STUDY_ID = "shared";
 
     public static void deletePhoneUser(TestUserHelper.TestUser researcher) throws IOException {
         checkArgument(researcher.getRoles().contains(Role.RESEARCHER));
