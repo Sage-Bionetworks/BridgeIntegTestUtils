@@ -167,7 +167,14 @@ public class TestUserHelper {
 
         return provider.getClient(service);
     }
-
+    
+    public static TestUser createAndSignInUser(Class<?> cls, String studyId, Role... roles) throws IOException {
+        TestUser admin = getSignedInAdmin();
+        admin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study(studyId)).execute();
+        TestUser createdUser = new TestUserHelper.Builder(cls).withStudyId(studyId).withRoles(roles).createAndSignInUser();
+        admin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study("api")).execute();
+        return createdUser;
+    }
     public static TestUser createAndSignInUser(Class<?> cls, boolean consentUser, Role... roles) throws IOException {
         return new TestUserHelper.Builder(cls).withRoles(roles).withConsentUser(consentUser).createAndSignInUser();
     }
@@ -177,6 +184,7 @@ public class TestUserHelper {
 
     public static class Builder {
         private Class<?> cls;
+        private String studyId;
         private boolean consentUser;
         private SignUp signUp;
         private boolean setPassword = true;
@@ -191,6 +199,10 @@ public class TestUserHelper {
         }
         public Builder withSignUp(SignUp signUp) {
             this.signUp = signUp;
+            return this;
+        }
+        public Builder withStudyId(String studyId) {
+            this.studyId = studyId;
             return this;
         }
         public Builder withClientInfo(ClientInfo clientInfo) {
@@ -249,8 +261,11 @@ public class TestUserHelper {
             if (setPassword) {
                 signUp.setPassword(PASSWORD);
             }
-            if (signUp.getStudy() == null) {
-                signUp.setStudy(IntegTestUtils.STUDY_ID);
+            if (studyId != null) {
+                signUp.setStudy(studyId);
+            }
+            if (signUp.getStudy() == null){
+                signUp.setStudy(admin.getStudyId());
             }
             if (substudyIds != null) {
                 signUp.setSubstudyIds(new ArrayList<>(substudyIds));
@@ -288,7 +303,7 @@ public class TestUserHelper {
 
                     adminsApi.deleteUser(testUser.getSession().getId()).execute();
                 }
-                throw new BridgeSDKException(ex.getMessage(), ex);
+                throw ex;
             }
             return testUser;
         }
