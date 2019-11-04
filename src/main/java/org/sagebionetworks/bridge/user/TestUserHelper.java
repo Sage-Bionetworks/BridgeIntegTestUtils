@@ -194,6 +194,7 @@ public class TestUserHelper {
         private String externalId;
         private Set<Role> roles = new HashSet<>();
         private Set<String> substudyIds;
+        private String synapseUserId;
 
         public Builder withConsentUser(boolean consentUser) {
             this.consentUser = consentUser;
@@ -225,6 +226,10 @@ public class TestUserHelper {
         }
         public Builder withExternalId(String externalId) {
             this.externalId = externalId;
+            return this;
+        }
+        public Builder withSynapseUserId(String synapseUserId) {
+            this.synapseUserId = synapseUserId;
             return this;
         }
 
@@ -268,6 +273,9 @@ public class TestUserHelper {
             }
             if (signUp.getStudy() == null){
                 signUp.setStudy(admin.getStudyId());
+            }
+            if (synapseUserId != null) {
+                signUp.synapseUserId(synapseUserId);
             }
             if (substudyIds != null) {
                 signUp.setSubstudyIds(new ArrayList<>(substudyIds));
