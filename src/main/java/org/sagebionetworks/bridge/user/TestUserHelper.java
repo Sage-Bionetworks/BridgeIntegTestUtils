@@ -19,7 +19,6 @@ import org.sagebionetworks.bridge.rest.Config;
 import org.sagebionetworks.bridge.rest.RestUtils;
 import org.sagebionetworks.bridge.rest.api.AuthenticationApi;
 import org.sagebionetworks.bridge.rest.api.ForAdminsApi;
-import org.sagebionetworks.bridge.rest.api.ForSuperadminsApi;
 import org.sagebionetworks.bridge.rest.exceptions.BadRequestException;
 import org.sagebionetworks.bridge.rest.exceptions.BridgeSDKException;
 import org.sagebionetworks.bridge.rest.exceptions.ConsentRequiredException;
@@ -146,7 +145,7 @@ public class TestUserHelper {
         String testStudyId = CONFIG.fromProperty(Config.Props.STUDY_IDENTIFIER);
         if (cachedAdmin.getStudyId() != testStudyId) {
             try {
-                cachedAdmin.getClient(ForSuperadminsApi.class).adminChangeStudy(new SignIn().study(testStudyId)).execute();
+                cachedAdmin.getClient(ForAdminsApi.class).adminChangeStudy(new SignIn().study(testStudyId)).execute();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -172,10 +171,10 @@ public class TestUserHelper {
     
     public static TestUser createAndSignInUser(Class<?> cls, String studyId, Role... roles) throws IOException {
         TestUser admin = getSignedInAdmin();
-        ForSuperadminsApi superadminsApi = admin.getClient(ForSuperadminsApi.class);
-        superadminsApi.adminChangeStudy(new SignIn().study(studyId)).execute();
+        ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
+        adminsApi.adminChangeStudy(new SignIn().study(studyId)).execute();
         TestUser createdUser = new TestUserHelper.Builder(cls).withStudyId(studyId).withRoles(roles).createAndSignInUser();
-        superadminsApi.adminChangeStudy(new SignIn().study(STUDY_ID)).execute();
+        adminsApi.adminChangeStudy(new SignIn().study(STUDY_ID)).execute();
         return createdUser;
     }
     public static TestUser createAndSignInUser(Class<?> cls, boolean consentUser, Role... roles) throws IOException {

@@ -1,7 +1,6 @@
 package org.sagebionetworks.bridge.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.sagebionetworks.bridge.rest.model.Role.RESEARCHER;
 
 import java.io.IOException;
 
@@ -10,8 +9,8 @@ import org.sagebionetworks.bridge.rest.Config;
 import org.sagebionetworks.bridge.rest.api.ForAdminsApi;
 import org.sagebionetworks.bridge.rest.api.ParticipantsApi;
 import org.sagebionetworks.bridge.rest.model.AccountSummaryList;
-import org.sagebionetworks.bridge.rest.model.AccountSummarySearch;
 import org.sagebionetworks.bridge.rest.model.Phone;
+import org.sagebionetworks.bridge.rest.model.Role;
 import org.sagebionetworks.bridge.user.TestUserHelper;
 
 public class IntegTestUtils {
@@ -21,12 +20,11 @@ public class IntegTestUtils {
     public static final String SHARED_STUDY_ID = "shared";
 
     public static void deletePhoneUser(TestUserHelper.TestUser researcher) throws IOException {
-        checkArgument(researcher.getRoles().contains(RESEARCHER));
+        checkArgument(researcher.getRoles().contains(Role.RESEARCHER));
 
         ParticipantsApi participantsApi = researcher.getClient(ParticipantsApi.class);
-        AccountSummarySearch search = new AccountSummarySearch().pageSize(5)
-                .phoneFilter(PHONE.getNumber());
-        AccountSummaryList list = participantsApi.searchAccountSummaries(search).execute().body();
+        AccountSummaryList list = participantsApi.getParticipants(0, 5, null,
+                IntegTestUtils.PHONE.getNumber(), null, null).execute().body();
         if (!list.getItems().isEmpty()) {
             TestUserHelper.TestUser admin = TestUserHelper.getSignedInAdmin();
             ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
