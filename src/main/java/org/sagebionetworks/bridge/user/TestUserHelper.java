@@ -111,10 +111,19 @@ public class TestUserHelper {
                 }
             }
             if (userId != null) {
-                // This should sign the admin manager in automatically.
                 TestUser admin = getSignedInAdmin();
+                boolean adminInWrongStudy = !getStudyId().equals(admin.getStudyId());
+                ForSuperadminsApi superadminsApi = admin.getClient(ForSuperadminsApi.class);
+                // If admin is in a different study, switch to the user's study before deletion.
+                if (adminInWrongStudy) {
+                    superadminsApi.adminChangeStudy(new SignIn().study(getStudyId())).execute();
+                }
                 ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
                 adminsApi.deleteUser(userId).execute();
+                // then switch back
+                if (adminInWrongStudy) {
+                    superadminsApi.adminChangeStudy(new SignIn().study(STUDY_ID)).execute();
+                }
             }
         }
         public SignIn getSignIn() {
