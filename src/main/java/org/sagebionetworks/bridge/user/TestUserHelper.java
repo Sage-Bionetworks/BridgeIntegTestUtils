@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.sagebionetworks.bridge.rest.ApiClientProvider;
 
@@ -32,6 +34,8 @@ import org.sagebionetworks.bridge.rest.model.UserSessionInfo;
 import org.sagebionetworks.bridge.util.IntegTestUtils;
 
 public class TestUserHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(TestUserHelper.class);
+
     private static final Config CONFIG = new Config();
 
     private static final List<String> LANGUAGES = Lists.newArrayList("en");
@@ -295,7 +299,13 @@ public class TestUserHelper {
             if (externalId != null) {
                 signUp.setExternalId(externalId);
             }
-            UserSessionInfo info = adminsApi.createUser(signUp).execute().body();
+            UserSessionInfo info;
+            try {
+                info = adminsApi.createUser(signUp).execute().body();
+            } catch (Exception ex) {
+                LOG.error("Error creating account " + signUp + ": " + ex.getMessage());
+                throw ex;
+            }
 
             SignIn signIn = new SignIn().study(signUp.getStudy()).phone(signUp.getPhone()).email(signUp.getEmail())
                     .password(signUp.getPassword());
