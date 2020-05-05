@@ -1,7 +1,7 @@
 package org.sagebionetworks.bridge.user;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sagebionetworks.bridge.util.IntegTestUtils.STUDY_ID;
+import static org.sagebionetworks.bridge.util.IntegTestUtils.TEST_APP_ID;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ public class TestUserHelper {
         private String userId; // try and hold onto this for the sake of cleaning up tests
 
         public TestUser(SignIn signIn, ClientManager manager, String userId) {
-            checkNotNull(signIn.getStudy());
+            checkNotNull(signIn.getAppId());
             checkNotNull(manager);
             this.signIn = signIn;
             this.manager = manager;
@@ -81,10 +81,10 @@ public class TestUserHelper {
             return (getSession() == null) ? null : getSession().getRoles();
         }
         public String getDefaultSubpopulation() {
-            return signIn.getStudy();
+            return signIn.getAppId();
         }
-        public String getStudyId() {
-            return signIn.getStudy();
+        public String getAppId() {
+            return signIn.getAppId();
         }
         public String getUserId() {
             return userId;
@@ -116,17 +116,17 @@ public class TestUserHelper {
             }
             if (userId != null) {
                 TestUser admin = getSignedInAdmin();
-                boolean adminInWrongStudy = !getStudyId().equals(admin.getStudyId());
+                boolean adminInWrongApp = !getAppId().equals(admin.getAppId());
                 ForSuperadminsApi superadminsApi = admin.getClient(ForSuperadminsApi.class);
-                // If admin is in a different study, switch to the user's study before deletion.
-                if (adminInWrongStudy) {
-                    superadminsApi.adminChangeStudy(new SignIn().study(getStudyId())).execute();
+                // If admin is in a different app, switch to the user's app before deletion.
+                if (adminInWrongApp) {
+                    superadminsApi.adminChangeApp(new SignIn().appId(getAppId())).execute();
                 }
                 ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
                 adminsApi.deleteUser(userId).execute();
                 // then switch back
-                if (adminInWrongStudy) {
-                    superadminsApi.adminChangeStudy(new SignIn().study(STUDY_ID)).execute();
+                if (adminInWrongApp) {
+                    superadminsApi.adminChangeApp(new SignIn().appId(TEST_APP_ID)).execute();
                 }
             }
         }
@@ -148,18 +148,18 @@ public class TestUserHelper {
         }
     }
     /**
-     * Get the signed in, bootstrap admin user. This method will reset the administrator's study 
-     * to be the API/test study, because this is a precondition expected by most of our tests and 
-     * it's easy to break by failing to reset the admin users's study as part of test cleanup. 
+     * Get the signed in, bootstrap admin user. This method will reset the administrator's app 
+     * to be the API/test app, because this is a precondition expected by most of our tests and 
+     * it's easy to break by failing to reset the admin users's app as part of test cleanup. 
      */
     public static TestUser getSignedInAdmin() {
         if (cachedAdmin == null) {
             cachedAdmin = getSignedInUser(CONFIG.getAdminSignIn());
         }
-        String testStudyId = CONFIG.fromProperty(Config.Props.STUDY_IDENTIFIER);
-        if (cachedAdmin.getStudyId() != testStudyId) {
+        String testAppId = CONFIG.fromProperty(Config.Props.APP_IDENTIFIER);
+        if (cachedAdmin.getAppId() != testAppId) {
             try {
-                cachedAdmin.getClient(ForSuperadminsApi.class).adminChangeStudy(new SignIn().study(testStudyId)).execute();
+                cachedAdmin.getClient(ForSuperadminsApi.class).adminChangeApp(new SignIn().appId(testAppId)).execute();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -176,19 +176,19 @@ public class TestUserHelper {
         return user;
     }
 
-    public static <T> T getNonAuthClient(Class<T> service, String studyId) {
+    public static <T> T getNonAuthClient(Class<T> service, String appId) {
         ApiClientProvider provider = new ApiClientProvider(ClientManager.getUrl(CONFIG.getEnvironment()),
-                RestUtils.getUserAgent(CLIENT_INFO), RestUtils.getAcceptLanguage(LANGUAGES), studyId);
+                RestUtils.getUserAgent(CLIENT_INFO), RestUtils.getAcceptLanguage(LANGUAGES), appId);
 
         return provider.getClient(service);
     }
     
-    public static TestUser createAndSignInUser(Class<?> cls, String studyId, Role... roles) throws IOException {
+    public static TestUser createAndSignInUser(Class<?> cls, String appId, Role... roles) throws IOException {
         TestUser admin = getSignedInAdmin();
         ForSuperadminsApi superadminsApi = admin.getClient(ForSuperadminsApi.class);
-        superadminsApi.adminChangeStudy(new SignIn().study(studyId)).execute();
-        TestUser createdUser = new TestUserHelper.Builder(cls).withStudyId(studyId).withRoles(roles).createAndSignInUser();
-        superadminsApi.adminChangeStudy(new SignIn().study(STUDY_ID)).execute();
+        superadminsApi.adminChangeApp(new SignIn().appId(appId)).execute();
+        TestUser createdUser = new TestUserHelper.Builder(cls).withAppId(appId).withRoles(roles).createAndSignInUser();
+        superadminsApi.adminChangeApp(new SignIn().appId(TEST_APP_ID)).execute();
         return createdUser;
     }
     public static TestUser createAndSignInUser(Class<?> cls, boolean consentUser, Role... roles) throws IOException {
@@ -200,7 +200,7 @@ public class TestUserHelper {
 
     public static class Builder {
         private Class<?> cls;
-        private String studyId;
+        private String appId;
         private boolean consentUser;
         private SignUp signUp;
         private boolean setPassword = true;
@@ -218,8 +218,8 @@ public class TestUserHelper {
             this.signUp = signUp;
             return this;
         }
-        public Builder withStudyId(String studyId) {
-            this.studyId = studyId;
+        public Builder withAppId(String appId) {
+            this.appId = appId;
             return this;
         }
         public Builder withClientInfo(ClientInfo clientInfo) {
@@ -282,11 +282,11 @@ public class TestUserHelper {
             if (setPassword) {
                 signUp.setPassword(PASSWORD);
             }
-            if (studyId != null) {
-                signUp.setStudy(studyId);
+            if (appId != null) {
+                signUp.setAppId(appId);
             }
-            if (signUp.getStudy() == null){
-                signUp.setStudy(admin.getStudyId());
+            if (signUp.getAppId() == null){
+                signUp.setAppId(admin.getAppId());
             }
             if (synapseUserId != null) {
                 signUp.synapseUserId(synapseUserId);
@@ -307,7 +307,7 @@ public class TestUserHelper {
                 throw ex;
             }
 
-            SignIn signIn = new SignIn().study(signUp.getStudy()).phone(signUp.getPhone()).email(signUp.getEmail())
+            SignIn signIn = new SignIn().appId(signUp.getAppId()).phone(signUp.getPhone()).email(signUp.getEmail())
                     .password(signUp.getPassword());
 
             ClientManager manager = new ClientManager.Builder().withConfig(admin.getConfig()).withSignIn(signIn)
