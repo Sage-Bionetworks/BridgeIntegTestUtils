@@ -207,7 +207,7 @@ public class TestUserHelper {
         private ClientInfo clientInfo;
         private String externalId;
         private Set<Role> roles = new HashSet<>();
-        private Set<String> substudyIds;
+        private Set<String> studyIds;
         private String synapseUserId;
 
         public Builder withConsentUser(boolean consentUser) {
@@ -230,8 +230,8 @@ public class TestUserHelper {
             Collections.addAll(this.roles, roles);
             return this;
         }
-        public Builder withSubstudyIds(Set<String> substudyIds) {
-            this.substudyIds = substudyIds;
+        public Builder withStudyIds(Set<String> studyIds) {
+            this.studyIds = studyIds;
             return this;
         }
         public Builder withSetPassword(boolean setPassword) {
@@ -291,8 +291,8 @@ public class TestUserHelper {
             if (synapseUserId != null) {
                 signUp.synapseUserId(synapseUserId);
             }
-            if (substudyIds != null) {
-                signUp.setSubstudyIds(new ArrayList<>(substudyIds));
+            if (studyIds != null) {
+                signUp.setStudyIds(new ArrayList<>(studyIds));
             }
             signUp.setRoles(new ArrayList<>(rolesList));
             signUp.setConsent(consentUser);
