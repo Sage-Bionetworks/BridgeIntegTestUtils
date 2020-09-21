@@ -4,12 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sagebionetworks.bridge.util.IntegTestUtils.TEST_APP_ID;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -207,7 +207,7 @@ public class TestUserHelper {
         private ClientInfo clientInfo;
         private String externalId;
         private Set<Role> roles = new HashSet<>();
-        private Set<String> substudyIds;
+        private Set<String> studyIds;
         private String synapseUserId;
 
         public Builder withConsentUser(boolean consentUser) {
@@ -230,8 +230,8 @@ public class TestUserHelper {
             Collections.addAll(this.roles, roles);
             return this;
         }
-        public Builder withSubstudyIds(Set<String> substudyIds) {
-            this.substudyIds = substudyIds;
+        public Builder withStudyIds(Set<String> studyIds) {
+            this.studyIds = studyIds;
             return this;
         }
         public Builder withSetPassword(boolean setPassword) {
@@ -291,10 +291,11 @@ public class TestUserHelper {
             if (synapseUserId != null) {
                 signUp.synapseUserId(synapseUserId);
             }
-            if (substudyIds != null) {
-                signUp.setSubstudyIds(new ArrayList<>(substudyIds));
+            signUp.setRoles(ImmutableList.copyOf(rolesList));
+            if (studyIds != null) {
+                signUp.setStudyIds(ImmutableList.copyOf(studyIds));
             }
-            signUp.setRoles(new ArrayList<>(rolesList));
+            
             signUp.setConsent(consentUser);
             if (externalId != null) {
                 signUp.setExternalId(externalId);
@@ -302,6 +303,11 @@ public class TestUserHelper {
             UserSessionInfo info;
             try {
                 info = adminsApi.createUser(signUp).execute().body();
+                // Administrative accounts should be added to the Sage Bionetworks organization, which
+                // has visibility into the two test studies.
+                if (!signUp.getRoles().isEmpty()) {
+                    adminsApi.addMember("sage-bionetworks", info.getId()).execute();    
+                }
             } catch (Exception ex) {
                 LOG.error("Error creating account " + signUp + ": " + ex.getMessage());
                 throw ex;
