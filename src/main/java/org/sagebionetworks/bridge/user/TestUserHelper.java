@@ -1,6 +1,7 @@
 package org.sagebionetworks.bridge.user;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sagebionetworks.bridge.util.IntegTestUtils.SAGE_ID;
 import static org.sagebionetworks.bridge.util.IntegTestUtils.TEST_APP_ID;
 
 import java.io.IOException;
@@ -306,7 +307,7 @@ public class TestUserHelper {
                 // Administrative accounts should be added to the Sage Bionetworks organization, which
                 // has visibility into the two test studies.
                 if (!signUp.getRoles().isEmpty()) {
-                    adminsApi.addMember("sage-bionetworks", info.getId()).execute();    
+                    adminsApi.addMember(SAGE_ID, info.getId()).execute();    
                 }
             } catch (Exception ex) {
                 LOG.error("Error creating account " + signUp + ": " + ex.getMessage());
