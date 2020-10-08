@@ -19,6 +19,8 @@ public class IntegTestUtils {
     public static final Phone PHONE = new Phone().number("+19712486796").regionCode("US");
     public static final String TEST_APP_ID = "api";
     public static final String SHARED_APP_ID = "shared";
+    public static final String SAGE_ID = "sage-bionetworks";
+    public static final String SAGE_NAME = "Sage Bionetworks";
 
     public static void deletePhoneUser(TestUserHelper.TestUser researcher) throws IOException {
         checkArgument(researcher.getRoles().contains(RESEARCHER));

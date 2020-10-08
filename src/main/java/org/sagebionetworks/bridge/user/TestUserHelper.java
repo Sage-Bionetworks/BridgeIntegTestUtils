@@ -1,15 +1,16 @@
 package org.sagebionetworks.bridge.user;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sagebionetworks.bridge.util.IntegTestUtils.SAGE_ID;
 import static org.sagebionetworks.bridge.util.IntegTestUtils.TEST_APP_ID;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -291,10 +292,11 @@ public class TestUserHelper {
             if (synapseUserId != null) {
                 signUp.synapseUserId(synapseUserId);
             }
+            signUp.setRoles(ImmutableList.copyOf(rolesList));
             if (studyIds != null) {
-                signUp.setStudyIds(new ArrayList<>(studyIds));
+                signUp.setStudyIds(ImmutableList.copyOf(studyIds));
             }
-            signUp.setRoles(new ArrayList<>(rolesList));
+            
             signUp.setConsent(consentUser);
             if (externalId != null) {
                 signUp.setExternalId(externalId);
@@ -302,6 +304,11 @@ public class TestUserHelper {
             UserSessionInfo info;
             try {
                 info = adminsApi.createUser(signUp).execute().body();
+                // Administrative accounts should be added to the Sage Bionetworks organization, which
+                // has visibility into the two test studies.
+                if (!signUp.getRoles().isEmpty()) {
+                    adminsApi.addMember(SAGE_ID, info.getId()).execute();    
+                }
             } catch (Exception ex) {
                 LOG.error("Error creating account " + signUp + ": " + ex.getMessage());
                 throw ex;
