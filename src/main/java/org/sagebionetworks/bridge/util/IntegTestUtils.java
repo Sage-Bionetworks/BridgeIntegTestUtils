@@ -1,8 +1,5 @@
 package org.sagebionetworks.bridge.util;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.sagebionetworks.bridge.rest.model.Role.RESEARCHER;
-
 import java.io.IOException;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -22,15 +19,14 @@ public class IntegTestUtils {
     public static final String SAGE_ID = "sage-bionetworks";
     public static final String SAGE_NAME = "Sage Bionetworks";
 
-    public static void deletePhoneUser(TestUserHelper.TestUser researcher) throws IOException {
-        checkArgument(researcher.getRoles().contains(RESEARCHER));
+    public static void deletePhoneUser() throws IOException {
+        TestUserHelper.TestUser admin = TestUserHelper.getSignedInAdmin();
 
-        ParticipantsApi participantsApi = researcher.getClient(ParticipantsApi.class);
+        ParticipantsApi participantsApi = admin.getClient(ParticipantsApi.class);
         AccountSummarySearch search = new AccountSummarySearch().pageSize(5)
                 .phoneFilter(PHONE.getNumber());
         AccountSummaryList list = participantsApi.searchAccountSummaries(search).execute().body();
         if (!list.getItems().isEmpty()) {
-            TestUserHelper.TestUser admin = TestUserHelper.getSignedInAdmin();
             ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
             adminsApi.deleteUser(list.getItems().get(0).getId()).execute();
         }
