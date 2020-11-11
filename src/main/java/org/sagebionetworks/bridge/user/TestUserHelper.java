@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
@@ -27,6 +28,7 @@ import org.sagebionetworks.bridge.rest.exceptions.BadRequestException;
 import org.sagebionetworks.bridge.rest.exceptions.BridgeSDKException;
 import org.sagebionetworks.bridge.rest.exceptions.ConsentRequiredException;
 import org.sagebionetworks.bridge.rest.model.ClientInfo;
+import org.sagebionetworks.bridge.rest.model.Enrollment;
 import org.sagebionetworks.bridge.rest.model.Phone;
 import org.sagebionetworks.bridge.rest.model.Role;
 import org.sagebionetworks.bridge.rest.model.SignIn;
@@ -207,8 +209,8 @@ public class TestUserHelper {
         private boolean setPassword = true;
         private ClientInfo clientInfo;
         private String externalId;
+        private Map<String, String> externalIds;
         private Set<Role> roles = new HashSet<>();
-        private Set<String> studyIds;
         private String synapseUserId;
 
         public Builder withConsentUser(boolean consentUser) {
@@ -231,16 +233,16 @@ public class TestUserHelper {
             Collections.addAll(this.roles, roles);
             return this;
         }
-        public Builder withStudyIds(Set<String> studyIds) {
-            this.studyIds = studyIds;
-            return this;
-        }
         public Builder withSetPassword(boolean setPassword) {
             this.setPassword = setPassword;
             return this;
         }
         public Builder withExternalId(String externalId) {
             this.externalId = externalId;
+            return this;
+        }
+        public Builder withExternalIds(Map<String, String> externalIds) {
+            this.externalIds = externalIds;
             return this;
         }
         public Builder withSynapseUserId(String synapseUserId) {
@@ -293,10 +295,6 @@ public class TestUserHelper {
                 signUp.synapseUserId(synapseUserId);
             }
             signUp.setRoles(ImmutableList.copyOf(rolesList));
-            if (studyIds != null) {
-                signUp.setStudyIds(ImmutableList.copyOf(studyIds));
-            }
-            
             signUp.setConsent(consentUser);
             if (externalId != null) {
                 signUp.setExternalId(externalId);
@@ -308,6 +306,14 @@ public class TestUserHelper {
                 // has visibility into the two test studies.
                 if (!signUp.getRoles().isEmpty()) {
                     adminsApi.addMember(SAGE_ID, info.getId()).execute();    
+                }
+                if (externalIds != null) {
+                    for (Map.Entry<String,String> entry : externalIds.entrySet()) {
+                        String studyId = entry.getKey();
+                        String externalId = entry.getValue();
+                        adminsApi.enrollParticipant(studyId, new Enrollment().userId(info.getId())
+                                .externalId(externalId)).execute();
+                    }
                 }
             } catch (Exception ex) {
                 LOG.error("Error creating account " + signUp + ": " + ex.getMessage());
