@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -278,8 +279,9 @@ public class TestUserHelper {
             if (signUp == null) {
                 signUp = new SignUp();
             }
-            // If we haven't specified either identifier, provide an email address
-            if (signUp.getEmail() == null && signUp.getPhone() == null) {
+            // If we haven't specified any identifier, provide an email address
+            if (signUp.getEmail() == null && signUp.getPhone() == null && signUp.getExternalId() == null
+                    && signUp.getExternalIds() == null) {
                 signUp.email(emailAddress);
             }
             if (setPassword) {
@@ -320,8 +322,16 @@ public class TestUserHelper {
                 throw ex;
             }
 
-            SignIn signIn = new SignIn().appId(signUp.getAppId()).phone(signUp.getPhone()).email(signUp.getEmail())
-                    .password(signUp.getPassword());
+            // Sign in should use email or phone if it exists, otherwise it uses external ID.
+            SignIn signIn = new SignIn().appId(signUp.getAppId()).phone(signUp.getPhone())
+                    .email(signUp.getEmail()).password(signUp.getPassword());
+            if (signIn.getEmail() == null && signIn.getPhone() == null) {
+                String finalExtId = signUp.getExternalId();
+                if (signUp.getExternalIds() != null && !signUp.getExternalIds().isEmpty()) {
+                    finalExtId = Iterables.getFirst(signUp.getExternalIds().values(), null);
+                }
+                signIn.externalId(finalExtId);
+            }
 
             ClientManager manager = new ClientManager.Builder().withConfig(admin.getConfig()).withSignIn(signIn)
                     .withClientInfo(clientInfo).withAcceptLanguage(LANGUAGES).build();
