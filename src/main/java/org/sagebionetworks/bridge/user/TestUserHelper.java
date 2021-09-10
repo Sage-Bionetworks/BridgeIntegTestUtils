@@ -213,6 +213,7 @@ public class TestUserHelper {
         private Map<String, String> externalIds;
         private Set<Role> roles = new HashSet<>();
         private String synapseUserId;
+        private boolean testUser;
 
         public Builder withConsentUser(boolean consentUser) {
             this.consentUser = consentUser;
@@ -248,6 +249,10 @@ public class TestUserHelper {
         }
         public Builder withSynapseUserId(String synapseUserId) {
             this.synapseUserId = synapseUserId;
+            return this;
+        }
+        public Builder isTestUser() {
+            this.testUser = true;
             return this;
         }
 
@@ -298,6 +303,9 @@ public class TestUserHelper {
             }
             signUp.setRoles(ImmutableList.copyOf(rolesList));
             signUp.setConsent(consentUser);
+            if (testUser) {
+                signUp.setDataGroups(ImmutableList.of("test_user"));    
+            }
             if (externalId != null) {
                 signUp.setExternalId(externalId);
             }
