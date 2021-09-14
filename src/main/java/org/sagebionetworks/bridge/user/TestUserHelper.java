@@ -251,7 +251,7 @@ public class TestUserHelper {
             this.synapseUserId = synapseUserId;
             return this;
         }
-        public Builder isTestUser() {
+        public Builder withTestDataGroup() {
             this.testUser = true;
             return this;
         }
