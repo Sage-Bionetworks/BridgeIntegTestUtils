@@ -1,6 +1,7 @@
 package org.sagebionetworks.bridge.user;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sagebionetworks.bridge.util.IntegTestUtils.CONFIG;
 import static org.sagebionetworks.bridge.util.IntegTestUtils.SAGE_ID;
 import static org.sagebionetworks.bridge.util.IntegTestUtils.TEST_APP_ID;
 
@@ -24,7 +25,6 @@ import org.sagebionetworks.bridge.rest.Config;
 import org.sagebionetworks.bridge.rest.RestUtils;
 import org.sagebionetworks.bridge.rest.api.AuthenticationApi;
 import org.sagebionetworks.bridge.rest.api.ForAdminsApi;
-import org.sagebionetworks.bridge.rest.api.ForSuperadminsApi;
 import org.sagebionetworks.bridge.rest.exceptions.BadRequestException;
 import org.sagebionetworks.bridge.rest.exceptions.BridgeSDKException;
 import org.sagebionetworks.bridge.rest.exceptions.ConsentRequiredException;
@@ -40,7 +40,9 @@ import org.sagebionetworks.bridge.util.IntegTestUtils;
 public class TestUserHelper {
     private static final Logger LOG = LoggerFactory.getLogger(TestUserHelper.class);
 
-    private static final Config CONFIG = new Config();
+    private static final SignIn API_SIGN_IN = new SignIn().appId(TEST_APP_ID);
+    private static final String ADMIN_EMAIL_PROPERTY = "admin.email";
+    private static final String ADMIN_PASSWORD_PROPERTY = "admin.password";
 
     private static final List<String> LANGUAGES = Lists.newArrayList("en");
     private static final String PASSWORD = "P4ssword!";
@@ -121,16 +123,16 @@ public class TestUserHelper {
             if (userId != null) {
                 TestUser admin = getSignedInAdmin();
                 boolean adminInWrongApp = !getAppId().equals(admin.getAppId());
-                ForSuperadminsApi superadminsApi = admin.getClient(ForSuperadminsApi.class);
+                AuthenticationApi authApi = admin.getClient(AuthenticationApi.class);
                 // If admin is in a different app, switch to the user's app before deletion.
                 if (adminInWrongApp) {
-                    superadminsApi.adminChangeApp(new SignIn().appId(getAppId())).execute();
+                    authApi.changeApp(new SignIn().appId(getAppId())).execute();
                 }
                 ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
                 adminsApi.deleteUser(userId).execute();
                 // then switch back
                 if (adminInWrongApp) {
-                    superadminsApi.adminChangeApp(new SignIn().appId(TEST_APP_ID)).execute();
+                    authApi.changeApp(API_SIGN_IN).execute();
                 }
             }
         }
@@ -158,12 +160,14 @@ public class TestUserHelper {
      */
     public static TestUser getSignedInAdmin() {
         if (cachedAdmin == null) {
-            cachedAdmin = getSignedInUser(CONFIG.getAdminSignIn());
+            SignIn signIn = API_SIGN_IN
+                    .email(CONFIG.get(ADMIN_EMAIL_PROPERTY))
+                    .password(CONFIG.get(ADMIN_PASSWORD_PROPERTY));
+            cachedAdmin = getSignedInUser(signIn);
         }
-        String testAppId = CONFIG.fromProperty(Config.Props.APP_IDENTIFIER);
-        if (cachedAdmin.getAppId() != testAppId) {
+        if (cachedAdmin.getAppId() != TEST_APP_ID) {
             try {
-                cachedAdmin.getClient(ForSuperadminsApi.class).adminChangeApp(new SignIn().appId(testAppId)).execute();
+                cachedAdmin.getClient(AuthenticationApi.class).changeApp(API_SIGN_IN).execute();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -189,15 +193,16 @@ public class TestUserHelper {
     
     public static TestUser createAndSignInUser(Class<?> cls, String appId, Role... roles) throws IOException {
         TestUser admin = getSignedInAdmin();
-        ForSuperadminsApi superadminsApi = admin.getClient(ForSuperadminsApi.class);
-        superadminsApi.adminChangeApp(new SignIn().appId(appId)).execute();
+        AuthenticationApi authApi = admin.getClient(AuthenticationApi.class);
+        authApi.changeApp(new SignIn().appId(appId)).execute();
         TestUser createdUser = new TestUserHelper.Builder(cls).withAppId(appId).withRoles(roles).createAndSignInUser();
-        superadminsApi.adminChangeApp(new SignIn().appId(TEST_APP_ID)).execute();
+        authApi.changeApp(API_SIGN_IN).execute();
         return createdUser;
     }
     public static TestUser createAndSignInUser(Class<?> cls, boolean consentUser, Role... roles) throws IOException {
         return new TestUserHelper.Builder(cls).withRoles(roles).withConsentUser(consentUser).createAndSignInUser();
     }
+    
     public static TestUser createAndSignInUser(Class<?> cls, boolean consentUser, SignUp signUp) throws IOException {
         return new TestUserHelper.Builder(cls).withConsentUser(consentUser).withSignUp(signUp).createAndSignInUser();
     }
