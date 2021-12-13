@@ -43,6 +43,10 @@ public class TestUserHelper {
     private static final SignIn API_SIGN_IN = new SignIn().appId(TEST_APP_ID);
     private static final String ADMIN_EMAIL_PROPERTY = "admin.email";
     private static final String ADMIN_PASSWORD_PROPERTY = "admin.password";
+    private static final SignIn ADMIN_SIGN_IN = new SignIn()
+            .appId(TEST_APP_ID)
+            .email(CONFIG.get(ADMIN_EMAIL_PROPERTY))
+            .password(CONFIG.get(ADMIN_PASSWORD_PROPERTY));
 
     private static final List<String> LANGUAGES = Lists.newArrayList("en");
     private static final String PASSWORD = "P4ssword!";
@@ -160,10 +164,7 @@ public class TestUserHelper {
      */
     public static TestUser getSignedInAdmin() {
         if (cachedAdmin == null) {
-            SignIn signIn = API_SIGN_IN
-                    .email(CONFIG.get(ADMIN_EMAIL_PROPERTY))
-                    .password(CONFIG.get(ADMIN_PASSWORD_PROPERTY));
-            cachedAdmin = getSignedInUser(signIn);
+            cachedAdmin = getSignedInUser(ADMIN_SIGN_IN);
         }
         if (cachedAdmin.getAppId() != TEST_APP_ID) {
             try {
