@@ -57,7 +57,6 @@ public class TestUserHelper {
         CLIENT_INFO.setAppVersion(0);
     }
     
-    private static int count = 0;
     private static TestUser cachedAdmin;
 
     /** Static getter for ClientInfo, to let callers set the app name and version, possibly other parameters. */
@@ -174,12 +173,6 @@ public class TestUserHelper {
      * the account needs to be reauthenticated. 
      */
     public static TestUser getSignedInAdmin(boolean forceSignIn) {
-        // Not clear why, but the session just seems to kaput at some point.
-        if (forceSignIn || count > 900) {
-            LOG.info("Clearing the TestUserHelper cached admin account (experimental)");
-            count = 0;
-            cachedAdmin = null;
-        }
         if (cachedAdmin == null) {
             try {
                 ClientManager cm = new ClientManager.Builder().withSignIn(ADMIN_SIGN_IN).build();
