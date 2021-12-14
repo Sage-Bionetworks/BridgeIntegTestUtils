@@ -30,6 +30,7 @@ import org.sagebionetworks.bridge.rest.exceptions.BridgeSDKException;
 import org.sagebionetworks.bridge.rest.exceptions.ConsentRequiredException;
 import org.sagebionetworks.bridge.rest.model.ClientInfo;
 import org.sagebionetworks.bridge.rest.model.Enrollment;
+import org.sagebionetworks.bridge.rest.model.Environment;
 import org.sagebionetworks.bridge.rest.model.Phone;
 import org.sagebionetworks.bridge.rest.model.Role;
 import org.sagebionetworks.bridge.rest.model.SignIn;
@@ -41,8 +42,8 @@ public class TestUserHelper {
     private static final Logger LOG = LoggerFactory.getLogger(TestUserHelper.class);
 
     private static final SignIn API_SIGN_IN = new SignIn().appId(TEST_APP_ID);
-    private static final String ADMIN_EMAIL_PROPERTY = "admin.email";
-    private static final String ADMIN_PASSWORD_PROPERTY = "admin.password";
+    private static final String ADMIN_EMAIL_PROPERTY = "synapse.test.user"; // "admin.email";
+    private static final String ADMIN_PASSWORD_PROPERTY = "synapse.test.user.password"; // "admin.password";
     private static final SignIn ADMIN_SIGN_IN = new SignIn()
             .appId(TEST_APP_ID)
             .email(CONFIG.get(ADMIN_EMAIL_PROPERTY))
@@ -55,13 +56,14 @@ public class TestUserHelper {
         CLIENT_INFO.setAppName("Integration Tests");
         CLIENT_INFO.setAppVersion(0);
     }
+    
+    private static int count = 0;
+    private static TestUser cachedAdmin;
 
     /** Static getter for ClientInfo, to let callers set the app name and version, possibly other parameters. */
     public static ClientInfo getClientInfo() {
         return CLIENT_INFO;
     }
-
-    private static TestUser cachedAdmin;
 
     public static class TestUser {
         private SignIn signIn;
@@ -160,11 +162,38 @@ public class TestUserHelper {
     /**
      * Get the signed in, bootstrap admin user. This method will reset the administrator's app 
      * to be the API/test app, because this is a precondition expected by most of our tests and 
-     * it's easy to break by failing to reset the admin users's app as part of test cleanup. 
+     * it's easy to break by failing to reset the admin users's app as part of test cleanup. Does
+     * not force the reauthentication of the admin account. 
      */
     public static TestUser getSignedInAdmin() {
+        return getSignedInAdmin(false);
+    }
+    /**
+     * Same as getSignedInAdmin, but if forceSignIn is true, it will sign the admin in again. Some
+     * tests that operate on OAuth actually end up signing out the admin user, so we must indicate
+     * the account needs to be reauthenticated. 
+     */
+    public static TestUser getSignedInAdmin(boolean forceSignIn) {
+        // Not clear why, but the session just seems to kaput at some point.
+        if (forceSignIn || count > 900) {
+            LOG.info("Clearing the TestUserHelper cached admin account (experimental)");
+            count = 0;
+            cachedAdmin = null;
+        }
         if (cachedAdmin == null) {
-            cachedAdmin = getSignedInUser(ADMIN_SIGN_IN);
+            try {
+                ClientManager cm = new ClientManager.Builder().withSignIn(ADMIN_SIGN_IN).build();
+                AuthenticationApi authApi = cm.getClient(AuthenticationApi.class);
+                UserSessionInfo session;
+                if (CONFIG.getEnvironment() == Environment.PRODUCTION) {
+                    session = RestUtils.signInWithSynapse(authApi, ADMIN_SIGN_IN);   
+                } else {
+                    session = RestUtils.signInWithSynapseDev(authApi, ADMIN_SIGN_IN);
+                }
+                cachedAdmin = new TestUser(ADMIN_SIGN_IN, cm, session.getId());
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         if (cachedAdmin.getAppId() != TEST_APP_ID) {
             try {
