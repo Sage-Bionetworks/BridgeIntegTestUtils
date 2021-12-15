@@ -173,6 +173,9 @@ public class TestUserHelper {
      * the account needs to be reauthenticated. 
      */
     public static TestUser getSignedInAdmin(boolean forceSignIn) {
+        if (forceSignIn) {
+            cachedAdmin = null;   
+        }
         if (cachedAdmin == null) {
             try {
                 ClientManager cm = new ClientManager.Builder().withSignIn(ADMIN_SIGN_IN).build();
