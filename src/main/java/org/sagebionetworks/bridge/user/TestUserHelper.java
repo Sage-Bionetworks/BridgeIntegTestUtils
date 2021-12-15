@@ -178,15 +178,15 @@ public class TestUserHelper {
         }
         if (cachedAdmin == null) {
             try {
-                ClientManager cm = new ClientManager.Builder().withSignIn(ADMIN_SIGN_IN).build();
-                AuthenticationApi authApi = cm.getClient(AuthenticationApi.class);
+                ClientManager manager = createClientManager().withSignIn(ADMIN_SIGN_IN).build();
+                AuthenticationApi authApi = manager.getClient(AuthenticationApi.class);
                 UserSessionInfo session;
                 if (CONFIG.getEnvironment() == Environment.PRODUCTION) {
                     session = RestUtils.signInWithSynapse(authApi, ADMIN_SIGN_IN);   
                 } else {
                     session = RestUtils.signInWithSynapseDev(authApi, ADMIN_SIGN_IN);
                 }
-                cachedAdmin = new TestUser(ADMIN_SIGN_IN, cm, session.getId());
+                cachedAdmin = new TestUser(ADMIN_SIGN_IN, manager, session.getId());
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }
@@ -203,11 +203,14 @@ public class TestUserHelper {
 
     // Returns the test user for the given sign-in credentials.
     public static TestUser getSignedInUser(SignIn signIn) {
-        ClientManager manager = new ClientManager.Builder().withSignIn(signIn).withConfig(CONFIG)
-                .withClientInfo(CLIENT_INFO).withAcceptLanguage(LANGUAGES).build();
+        ClientManager manager = createClientManager().withSignIn(signIn).build();
         TestUser user = new TestUser(signIn, manager, null);
         user.signInAgain();
         return user;
+    }
+    
+    private static ClientManager.Builder createClientManager() {
+        return new ClientManager.Builder().withConfig(CONFIG).withClientInfo(CLIENT_INFO).withAcceptLanguage(LANGUAGES);
     }
 
     public static <T> T getNonAuthClient(Class<T> service, String appId) {
