@@ -9,8 +9,8 @@ import org.sagebionetworks.bridge.rest.api.ParticipantsApi;
 import org.sagebionetworks.bridge.rest.model.AccountSummaryList;
 import org.sagebionetworks.bridge.rest.model.AccountSummarySearch;
 import org.sagebionetworks.bridge.rest.model.Phone;
+import org.sagebionetworks.bridge.user.TestUser;
 import org.sagebionetworks.bridge.user.TestUserHelper;
-import org.sagebionetworks.bridge.user.TestUserHelper.TestUser;
 
 public class IntegTestUtils {
     
@@ -30,7 +30,7 @@ public class IntegTestUtils {
     public static final Config CONFIG = new Config(CONFIG_FILE, USER_CONFIG_FILE, SDK_TEST_FILE, USER_SDK_TEST_FILE);
     
     public static void deletePhoneUser() throws IOException {
-        TestUserHelper.TestUser admin = TestUserHelper.getSignedInAdmin();
+        TestUser admin = TestUserHelper.getSignedInAdmin();
 
         ParticipantsApi participantsApi = admin.getClient(ParticipantsApi.class);
         AccountSummarySearch search = new AccountSummarySearch().pageSize(5)
