@@ -106,7 +106,7 @@ public class TestUserHelper {
     // Returns the test user for the given sign-in credentials.
     public static TestUser getSignedInUser(SignIn signIn) {
         ClientManager manager = createClientManager().withSignIn(signIn).build();
-        TestUser user = new TestUserImpl(signIn, manager, null);
+        TestUser user = new TestUser(signIn, manager, null);
         user.signInAgain();
         return user;
     }
@@ -279,7 +279,7 @@ public class TestUserHelper {
 
             ClientManager manager = new ClientManager.Builder().withConfig(admin.getConfig()).withSignIn(signIn)
                     .withClientInfo(clientInfo).withAcceptLanguage(LANGUAGES).build();
-            return new TestUserImpl(signIn, manager, info.getId());
+            return new TestUser(signIn, manager, info.getId());
         }
 
         public TestUser createAndSignInUser() throws IOException {
