@@ -21,17 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.sagebionetworks.bridge.rest.ApiClientProvider;
 
 import org.sagebionetworks.bridge.rest.ClientManager;
-import org.sagebionetworks.bridge.rest.Config;
 import org.sagebionetworks.bridge.rest.RestUtils;
 import org.sagebionetworks.bridge.rest.api.AuthenticationApi;
 import org.sagebionetworks.bridge.rest.api.ForAdminsApi;
-import org.sagebionetworks.bridge.rest.exceptions.BadRequestException;
-import org.sagebionetworks.bridge.rest.exceptions.BridgeSDKException;
 import org.sagebionetworks.bridge.rest.exceptions.ConsentRequiredException;
 import org.sagebionetworks.bridge.rest.model.ClientInfo;
 import org.sagebionetworks.bridge.rest.model.Enrollment;
 import org.sagebionetworks.bridge.rest.model.Environment;
-import org.sagebionetworks.bridge.rest.model.Phone;
 import org.sagebionetworks.bridge.rest.model.Role;
 import org.sagebionetworks.bridge.rest.model.SignIn;
 import org.sagebionetworks.bridge.rest.model.SignUp;
@@ -42,8 +38,8 @@ public class TestUserHelper {
     private static final Logger LOG = LoggerFactory.getLogger(TestUserHelper.class);
 
     private static final SignIn API_SIGN_IN = new SignIn().appId(TEST_APP_ID);
-    private static final String ADMIN_EMAIL_PROPERTY = "synapse.test.user"; // "admin.email";
-    private static final String ADMIN_PASSWORD_PROPERTY = "synapse.test.user.password"; // "admin.password";
+    private static final String ADMIN_EMAIL_PROPERTY = "synapse.test.user";
+    private static final String ADMIN_PASSWORD_PROPERTY = "synapse.test.user.password";
     private static final SignIn ADMIN_SIGN_IN = new SignIn()
             .appId(TEST_APP_ID)
             .email(CONFIG.get(ADMIN_EMAIL_PROPERTY))
@@ -57,107 +53,13 @@ public class TestUserHelper {
         CLIENT_INFO.setAppVersion(0);
     }
     
-    private static TestUser cachedAdmin;
+    private static BootstrapTestUser cachedAdmin;
 
     /** Static getter for ClientInfo, to let callers set the app name and version, possibly other parameters. */
     public static ClientInfo getClientInfo() {
         return CLIENT_INFO;
     }
 
-    public static class TestUser {
-        private SignIn signIn;
-        private ClientManager manager;
-        private String userId; // try and hold onto this for the sake of cleaning up tests
-
-        public TestUser(SignIn signIn, ClientManager manager, String userId) {
-            checkNotNull(signIn.getAppId());
-            checkNotNull(manager);
-            this.signIn = signIn;
-            this.manager = manager;
-            this.userId = userId; // if this is null, we will try and get it on a sign in
-        }
-        public UserSessionInfo getSession() {
-            return manager.getSessionOfClients();
-        }
-        public String getEmail() {
-            return signIn.getEmail();
-        }
-        public Phone getPhone() {
-            return signIn.getPhone();
-        }
-        public String getPassword() {
-            return signIn.getPassword();
-        }
-        public List<Role> getRoles() {
-            return (getSession() == null) ? null : getSession().getRoles();
-        }
-        public String getDefaultSubpopulation() {
-            return signIn.getAppId();
-        }
-        public String getAppId() {
-            return signIn.getAppId();
-        }
-        public String getUserId() {
-            return userId;
-        }
-        public <T> T getClient(Class<T> service) {
-            return manager.getClient(service);
-        }
-        public UserSessionInfo signInAgain() {
-            AuthenticationApi authApi = manager.getClient(AuthenticationApi.class);
-            try {
-                UserSessionInfo session = authApi.signInV4(getSignIn()).execute().body();
-                userId = session.getId();
-                return manager.getSessionOfClients();
-            } catch(IOException ioe) {
-                throw new BridgeSDKException(ioe.getMessage(), ioe);
-            }
-        }
-        public void signOut() throws IOException {
-            AuthenticationApi authApi = manager.getClient(AuthenticationApi.class);
-            authApi.signOut().execute();
-        }
-        public void signOutAndDeleteUser() throws IOException {
-            if (getSession() != null) {
-                try {
-                    this.signOut();
-                } catch(BadRequestException e) {
-                    // It's quite possible at the end of some tests, the user isn't signed in.
-                }
-            }
-            if (userId != null) {
-                TestUser admin = getSignedInAdmin();
-                boolean adminInWrongApp = !getAppId().equals(admin.getAppId());
-                AuthenticationApi authApi = admin.getClient(AuthenticationApi.class);
-                // If admin is in a different app, switch to the user's app before deletion.
-                if (adminInWrongApp) {
-                    authApi.changeApp(new SignIn().appId(getAppId())).execute();
-                }
-                ForAdminsApi adminsApi = admin.getClient(ForAdminsApi.class);
-                adminsApi.deleteUser(userId).execute();
-                // then switch back
-                if (adminInWrongApp) {
-                    authApi.changeApp(API_SIGN_IN).execute();
-                }
-            }
-        }
-        public SignIn getSignIn() {
-            return signIn;
-        }
-        public ClientManager getClientManager() {
-            return manager;
-        }
-        public Config getConfig() {
-            return manager.getConfig();
-        }
-        public void setClientInfo(ClientInfo clientInfo) {
-            this.manager = new ClientManager.Builder()
-                    .withClientInfo(clientInfo)
-                    .withSignIn(signIn)
-                    .withConfig(manager.getConfig())
-                    .withAcceptLanguage(LANGUAGES).build();
-        }
-    }
     /**
      * Get the signed in, bootstrap admin user. This method will reset the administrator's app 
      * to be the API/test app, because this is a precondition expected by most of our tests and 
@@ -186,7 +88,7 @@ public class TestUserHelper {
                 } else {
                     session = RestUtils.signInWithSynapseDev(authApi, ADMIN_SIGN_IN);
                 }
-                cachedAdmin = new TestUser(ADMIN_SIGN_IN, manager, session.getId());
+                cachedAdmin = new BootstrapTestUser(ADMIN_SIGN_IN, manager, session.getId());
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }
