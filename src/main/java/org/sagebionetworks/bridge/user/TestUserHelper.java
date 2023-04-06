@@ -142,6 +142,7 @@ public class TestUserHelper {
         private Class<?> cls;
         private String appId;
         private boolean consentUser;
+        private boolean includeUserAgent = true;
         private SignUp signUp;
         private boolean setPassword = true;
         private ClientInfo clientInfo;
@@ -150,11 +151,19 @@ public class TestUserHelper {
         private Set<Role> roles = new HashSet<>();
         private String synapseUserId;
         private boolean testUser;
+        private String userAgentOverride;
 
         public Builder withConsentUser(boolean consentUser) {
             this.consentUser = consentUser;
             return this;
         }
+
+        /** True if you want the TestUser to include the User-Agent header in requests. Defaults to true. */
+        public Builder withIncludeUserAgent(boolean includeUserAgent) {
+            this.includeUserAgent = includeUserAgent;
+            return this;
+        }
+
         public Builder withSignUp(SignUp signUp) {
             this.signUp = signUp;
             return this;
@@ -189,6 +198,15 @@ public class TestUserHelper {
         }
         public Builder withTestDataGroup() {
             this.testUser = true;
+            return this;
+        }
+
+        /**
+         * This is used to override the user agent string in the client manager. This is useful for
+         * tests that need to test the user agent string.
+         */
+        public Builder withUserAgentOverride(String userAgentOverride) {
+            this.userAgentOverride = userAgentOverride;
             return this;
         }
 
@@ -278,7 +296,8 @@ public class TestUserHelper {
             }
 
             ClientManager manager = new ClientManager.Builder().withConfig(admin.getConfig()).withSignIn(signIn)
-                    .withClientInfo(clientInfo).withAcceptLanguage(LANGUAGES).build();
+                    .withIncludeUserAgent(includeUserAgent).withClientInfo(clientInfo).withAcceptLanguage(LANGUAGES)
+                    .withUserAgentOverride(userAgentOverride).build();
             return new TestUser(signIn, manager, info.getId());
         }
 
